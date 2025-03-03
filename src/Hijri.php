@@ -4,6 +4,8 @@ namespace Pharaonic\Hijri;
 
 use Carbon\Carbon;
 use Carbon\Translator;
+use DateTimeInterface;
+use DateTimeZone;
 
 class Hijri extends Carbon
 {
@@ -61,8 +63,6 @@ class Hijri extends Carbon
      */
     protected $CURRENT_DAY = null;
 
-
-    
     /**
      * Getting an instance of Hijri class.
      *
@@ -131,8 +131,6 @@ class Hijri extends Carbon
         return $this;
     }
 
-    
-
     /**
      * Create a carbon instance from a string.
      *
@@ -147,7 +145,7 @@ class Hijri extends Carbon
      *
      * @return static
      */
-    public static function parse($time = null, $tz = null)
+    public static function parse($time = null, $tz = null): static
     {
         return self::$HIJRI_INSTANCE->prepare(parent::parse($time, $tz));
     }
@@ -160,7 +158,7 @@ class Hijri extends Carbon
      *
      * @return $this|string
      */
-    public function locale(string $locale = null, ...$fallbackLocales)
+    public function locale(string $locale = null, ...$fallbackLocales): static|string
     {
         if ($locale === null) {
             return $this->getTranslatorLocale();
@@ -203,7 +201,7 @@ class Hijri extends Carbon
      *
      * @return string
      */
-    public function getTranslatedDayName($context = null, $keySuffix = '', $defaultValue = null)
+    public function getTranslatedDayName($context = null, $keySuffix = '', $defaultValue = null): string
     {
         return $this->getTranslatedFormByRegExp('weekdays', $keySuffix, $context, $this->CURRENT_DAY, $defaultValue ?: $this->englishDayOfWeek);
     }
@@ -211,7 +209,7 @@ class Hijri extends Carbon
     protected function getTranslatedFormByRegExp($baseKey, $keySuffix, $context, $subKey, $defaultValue)
     {
         $key = $baseKey . $keySuffix;
-        $standaloneKey = "${key}_standalone";
+        $standaloneKey = $key . '_standalone';
         $baseTranslation = $this->getTranslationMessage($key);
 
         if ($baseTranslation instanceof Closure) {
@@ -220,7 +218,7 @@ class Hijri extends Carbon
 
         if (
             $this->getTranslationMessage("$standaloneKey.$subKey") &&
-            (!$context || ($regExp = $this->getTranslationMessage("${baseKey}_regexp")) && !preg_match($regExp, $context))
+            (!$context || ($regExp = $this->getTranslationMessage("$baseKey_regexp")) && !preg_match($regExp, $context))
         ) {
             $key = $standaloneKey;
         }
@@ -237,7 +235,7 @@ class Hijri extends Carbon
      *
      * @return string
      */
-    public function getTranslatedMonthName($context = null, $keySuffix = '', $defaultValue = null)
+    public function getTranslatedMonthName($context = null, $keySuffix = '', $defaultValue = null): string
     {
         return $this->getTranslatedFormByRegExp('months', $keySuffix, $context, $this->month - 1, $defaultValue ?: $this->englishMonth);
     }
@@ -245,24 +243,30 @@ class Hijri extends Carbon
     /**
      * Returns the formatted date string on success or FALSE on failure.
      *
+     * @see https://php.net/manual/en/datetime.format.php
+     *
      * @param string $format
      *
      * @return string
      */
-    public function format($format)
+    public function format($format): string
     {
-        return str_replace([
-            $this->englishDayOfWeek,
-            $this->englishMonth,
+        return str_replace(
+            [
+                $this->englishDayOfWeek,
+                $this->englishMonth,
 
-            $this->shortEnglishDayOfWeek,
-            $this->shortEnglishMonth
-        ], [
-            $this->dayName,
-            $this->monthName,
+                $this->shortEnglishDayOfWeek,
+                $this->shortEnglishMonth
+            ],
+            [
+                $this->dayName,
+                $this->monthName,
 
-            $this->shortDayName,
-            $this->monthName,
-        ], parent::format($format));
+                $this->shortDayName,
+                $this->monthName,
+            ],
+            parent::format($format)
+        );
     }
 }
